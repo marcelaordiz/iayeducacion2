@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Mi primer encuentro con la IA - Tablero Colaborativo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        font-family: sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        margin: 0;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+
+    .questions {
+        margin-bottom: 30px;
+        background: #f1f1f1;
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    .add-response {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: block;
+        margin: 20px auto;
+    }
+
+    .board {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .note {
+        background: #fff8dc;
+        border-left: 6px solid #ffb703;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background: white;
+        margin: 5% auto;
+        padding: 20px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 600px;
+    }
+
+    label {
+        font-weight: bold;
+        margin-top: 10px;
+        display: block;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+
+    .modal-buttons {
+        margin-top: 15px;
+        text-align: right;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .btn-primary { background: #007bff; color: white; }
+    .btn-secondary { background: #6c757d; color: white; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>🤖 Mi primer encuentro con la IA</h1>
+    <div class="questions">
+        <p>💭 ¿Cuál fue tu primera experiencia directa con una herramienta de IA generativa?</p>
+        <p>💭 ¿Qué sensaciones te generó?</p>
+        <p>💭 ¿Observaste cambios en tus estudiantes?</p>
+    </div>
+    <button class="add-response" onclick="document.getElementById('modal').style.display='block'">✨ Agregar mi experiencia</button>
+    <div class="board" id="notesBoard">
+        <div><em>Cargando experiencias...</em></div>
+    </div>
+</div>
+
+<div id="modal" class="modal" onclick="if(event.target===this) this.style.display='none'">
+    <div class="modal-content">
+        <h3>Publicá tu experiencia</h3>
+        <form id="responseForm">
+            <label>Tu nombre:</label>
+            <input type="text" id="nombre" required>
+            <label>Primera herramienta de IA:</label>
+            <input type="text" id="herramienta" required>
+            <label>Describe tu experiencia:</label>
+            <textarea id="experiencia" required></textarea>
+            <label>¿Qué sentiste?</label>
+            <textarea id="sensaciones" required></textarea>
+            <label>¿Cambios observados en estudiantes?</label>
+            <textarea id="cambios"></textarea>
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">✨ Publicar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbyvs4-IJgcJnYDQdFdlCnu16AbUdCbZo6TSCMU0ZY2bSj3qVqUTMxffG40E1TW-NLI/exec";
+
+document.getElementById('responseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = {
+        nombre: document.getElementById('nombre').value,
+        herramienta: document.getElementById('herramienta').value,
+        experiencia: document.getElementById('experiencia').value,
+        sensaciones: document.getElementById('sensaciones').value,
+        cambios: document.getElementById('cambios').value
+    };
+
+    await fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+    });
+
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('responseForm').reset();
+    cargarEntradas();
+});
+
+async function cargarEntradas() {
+    const res = await fetch(scriptURL);
+    const datos = await res.json();
+    const board = document.getElementById('notesBoard');
+    board.innerHTML = '';
+    datos.reverse().forEach(e => {
+        const div = document.createElement('div');
+        div.className = 'note';
+        div.innerHTML = `
+            <h4>👤 <strong>${e.nombre}</strong></h4>
+            <p><strong>🛠️ Herramienta:</strong> ${e.herramienta}</p>
+            <p><strong>📝 Experiencia:</strong> ${e.experiencia}</p>
+            <p><strong>💭 Sensaciones:</strong> ${e.sensaciones}</p>
+            ${e.cambios ? `<p><strong>👥 Cambios observados:</strong> ${e.cambios}</p>` : ''}
+            <div class="meta">📅 Registrado el ${e.fecha}</div>
+        `;
+        board.appendChild(div);
+    });
+}
+
+window.onload = cargarEntradas;
+</script>
+</body>
+</html>
